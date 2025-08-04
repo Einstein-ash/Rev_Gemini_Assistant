@@ -170,7 +170,9 @@ class VoiceSession {
         for (let i = 0; i < audioData.length; i++) {
             sum += audioData[i] * audioData[i];
         }
-        const rms = Math.sqrt(sum / audioData.length);
+        // const rms = Math.sqrt(sum / audioData.length) ; -- thodi thodi issue 
+        const rms = Math.sqrt(sum / audioData.length) / 10;    // --- best working till now 
+  
         
         // If we detect speech while responding, trigger interruption
         if (rms > this.audioThreshold && this.isCurrentlyResponding) {
