@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 const wss = new WebSocket.Server({ server });
 
 const ai = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY || 'YOUR_GEMINI_API_KEY_HERE'
+    apiKey: process.env.GEMINI_API_KEY 
 });
 
 // working good - server4
