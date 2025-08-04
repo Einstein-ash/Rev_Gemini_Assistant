@@ -171,7 +171,7 @@ class VoiceSession {
             sum += audioData[i] * audioData[i];
         }
         // const rms = Math.sqrt(sum / audioData.length) ; -- thodi thodi issue 
-        const rms = Math.sqrt(sum / audioData.length) / 10;    // --- best working till now 
+        const rms = Math.sqrt(sum / audioData.length) / 11;    // --- best working till now 
   
         
         // If we detect speech while responding, trigger interruption
