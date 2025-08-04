@@ -22,6 +22,7 @@ const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY || 'YOUR_GEMINI_API_KEY_HERE'
 });
 
+// working good - server4
 const model = "gemini-2.5-flash-preview-native-audio-dialog";
 
 const config = {
