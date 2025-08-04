@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!--  this is working really good for server4.js  -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rev - Revolt Motors Voice Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 50%, #415a77 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 3rem;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header {
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff6b35, #ffa726);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #a0a9b8;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .status {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            border-radius: 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status.disconnected {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            color: #ff8a80;
+        }
+
+        .status.connected {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: #81c784;
+        }
+
+        .status.recording {
+            background: rgba(255, 152, 0, 0.1);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            color: #ffb74d;
+            animation: pulse 2s infinite;
+        }
+
+        .status.interrupted {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            color: #ffcc02;
+            animation: interruptPulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        @keyframes interruptPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        .button {
+            background: linear-gradient(45deg, #ff6b35, #ffa726);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+            min-width: 140px;
+        }
+
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(255, 107, 53, 0.4);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .voice-button {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem auto;
+            background: linear-gradient(45deg, #4caf50, #81c784);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+        }
+
+        .voice-button.recording {
+            background: linear-gradient(45deg, #f44336, #ff8a80);
+            animation: recordingPulse 1s infinite alternate;
+            box-shadow: 0 8px 25px rgba(244, 67, 54, 0.4);
+        }
+
+        .voice-button.interrupted {
+            background: linear-gradient(45deg, #ff9800, #ffb74d);
+            animation: interruptedPulse 0.5s infinite alternate;
+            box-shadow: 0 8px 25px rgba(255, 152, 0, 0.4);
+        }
+
+        @keyframes recordingPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        @keyframes interruptedPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.08); }
+        }
+
+        .audio-visualizer {
+            width: 100%;
+            height: 80px;
+            margin: 1.5rem 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .audio-bar {
+            width: 6px;
+            background: linear-gradient(to top, #ff6b35, #ffa726);
+            margin: 0 2px;
+            border-radius: 3px;
+            transition: height 0.1s ease;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .revolt-info {
+            background: rgba(255, 107, 53, 0.1);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            border-radius: 15px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            color: #ffb74d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">REV</div>
+            <div class="subtitle">Revolt Motors Voice Assistant</div>
+            <div class="subtitle">Revolt Motors Voice Assistant - <br>Designed by <b>Ashwani Selwal</b></div>
+            <div class="revolt-info">
+                🏍️ Ask me about electric motorcycles, RV400 models, pricing, features, and more!
+            </div>
+        </div>
+        
+        <div id="status" class="status disconnected">
+            Ready to connect...
+        </div>
+        
+        <div class="controls">
+            <button id="connectBtn" class="button">
+                Connect to Rev
+            </button>
+        </div>
+        
+        <button id="voiceBtn" class="button voice-button" disabled>
+            🎤
+        </button>
+        
+        <div class="audio-visualizer" id="visualizer">
+            <!-- Audio bars will be added dynamically -->
+        </div>
+        
+        <div class="footer">
+            Powered by Gemini Live API • Revolt Motors © 2024
+        </div>
+    </div>
+
+    <script>
+        class RevVoiceAssistant {
+            constructor() {
+                this.ws = null;
+                this.audioStream = null;
+                this.inputAudioContext = null;
+                this.outputAudioContext = null;
+                this.analyser = null;
+                this.processor = null;
+                this.sourceNode = null;
+                this.isRecording = false;
+                this.isConnected = false;
+                this.nextStartTime = 0;
+                this.sources = new Set();
+                this.isRevSpeaking = false;
+                
+                // Enhanced interruption detection
+                this.silenceThreshold = 0.01;
+                this.speechThreshold = 0.025; // Slightly increased base threshold
+                this.consecutiveSpeechFrames = 0;
+                this.speechDetectionThreshold = 8; // Increased from 3 to 8
+                this.lastInterruptionTime = 0;
+                this.interruptionCooldown = 1500; // Increased from 500 to 1500ms
+                this.revStartedSpeakingTime = 0; // Track when Rev starts speaking
+                
+                this.connectBtn = document.getElementById('connectBtn');
+                this.voiceBtn = document.getElementById('voiceBtn');
+                this.status = document.getElementById('status');
+                this.visualizer = document.getElementById('visualizer');
+                
+                this.setupEventListeners();
+                this.createAudioBars();
+                this.initAudioContexts();
+            }
+            
+            initAudioContexts() {
+                this.inputAudioContext = new (window.AudioContext || window.webkitAudioContext)({
+                    sampleRate: 16000
+                });
+                this.outputAudioContext = new (window.AudioContext || window.webkitAudioContext)({
+                    sampleRate: 24000
+                });
+                this.nextStartTime = 0;
+            }
+            
+            setupEventListeners() {
+                this.connectBtn.addEventListener('click', () => this.toggleConnection());
+                this.voiceBtn.addEventListener('click', () => this.toggleRecording());
+            }
+            
+            createAudioBars() {
+                for (let i = 0; i < 25; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'audio-bar';
+                    bar.style.height = '10px';
+                    this.visualizer.appendChild(bar);
+                }
+            }
+            
+            updateStatus(message, className) {
+                this.status.textContent = message;
+                this.status.className = `status ${className}`;
+            }
+            
+            async toggleConnection() {
+                if (this.isConnected) {
+                    this.disconnect();
+                } else {
+                    await this.connect();
+                }
+            }
+            
+            async connect() {
+                try {
+                    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    const wsUrl = `${protocol}//${window.location.host}`;
+                    
+                    this.ws = new WebSocket(wsUrl);
+                    
+                    this.ws.onopen = () => {
+                        this.isConnected = true;
+                        this.updateStatus('Connected to server', 'connected');
+                        this.connectBtn.textContent = 'Disconnect';
+                    };
+                    
+                    this.ws.onmessage = (event) => {
+                        this.handleMessage(JSON.parse(event.data));
+                    };
+                    
+                    this.ws.onclose = () => {
+                        this.isConnected = false;
+                        this.updateStatus('Disconnected', 'disconnected');
+                        this.connectBtn.textContent = 'Connect to Rev';
+                        this.voiceBtn.disabled = true;
+                    };
+                    
+                    this.ws.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                    };
+                    
+                } catch (error) {
+                    console.error('Connection failed:', error);
+                }
+            }
+            
+            disconnect() {
+                if (this.ws) {
+                    this.ws.close();
+                }
+                if (this.isRecording) {
+                    this.stopRecording();
+                }
+            }
+            
+            handleMessage(data) {
+                switch (data.type) {
+                    case 'connected':
+                        this.connectToGemini();
+                        break;
+                        
+                    case 'gemini_connected':
+                        this.voiceBtn.disabled = false;
+                        this.updateStatus('Ready to chat with Rev! 🏍️', 'connected');
+                        break;
+                        
+                    case 'audio_response':
+                        this.isRevSpeaking = true;
+                        this.revStartedSpeakingTime = Date.now(); // Track when Rev starts speaking
+                        this.consecutiveSpeechFrames = 0; // Reset any false detection
+                        this.playAudioResponse(data.data);
+                        break;
+                        
+                    case 'audio_interrupted':
+                        console.log('Audio interrupted by server');
+                        this.handleInterruptionFromServer();
+                        break;
+                        
+                    case 'turn_complete':
+                        this.isRevSpeaking = false;
+                        this.updateStatus('Ready to chat with Rev! 🏍️', 'connected');
+                        break;
+                        
+                    case 'error':
+                        this.updateStatus('Error: ' + data.message, 'disconnected');
+                        break;
+                }
+            }
+            
+            handleInterruptionFromServer() {
+                for (const source of this.sources.values()) {
+                    try {
+                        source.stop();
+                    } catch (e) {
+                        // Source might already be stopped
+                    }
+                    this.sources.delete(source);
+                }
+                this.sources.clear();
+                this.nextStartTime = 0;
+                this.isRevSpeaking = false;
+                
+                this.updateStatus('⚡ Interrupted - Listening...', 'interrupted');
+                this.voiceBtn.classList.add('interrupted');
+                this.voiceBtn.classList.remove('recording');
+                
+                setTimeout(() => {
+                    if (!this.isRecording) {
+                        this.updateStatus('Ready to chat with Rev! 🏍️', 'connected');
+                        this.voiceBtn.classList.remove('interrupted');
+                    }
+                }, 1000);
+            }
+            
+            detectSpeechForInterruption(pcmData) {
+                // Enhanced filtering to prevent self-audio detection
+                let sum = 0;
+                for (let i = 0; i < pcmData.length; i++) {
+                    sum += pcmData[i] * pcmData[i];
+                }
+                const rms = Math.sqrt(sum / pcmData.length);
+                
+                // Higher threshold and more strict detection to avoid Rev's own voice
+                const enhancedSpeechThreshold = this.speechThreshold * 2.5; // Much higher threshold
+                const currentTime = Date.now();
+                
+                // Don't detect interruption if Rev just started speaking (give 1 second buffer)
+                if (this.isRevSpeaking && (currentTime - this.revStartedSpeakingTime) < 1000) {
+                    this.consecutiveSpeechFrames = 0;
+                    return false;
+                }
+                
+                // Enhanced speech detection with stricter criteria
+                if (rms > enhancedSpeechThreshold) {
+                    this.consecutiveSpeechFrames++;
+                } else {
+                    // Decay faster to prevent false positives
+                    this.consecutiveSpeechFrames = Math.max(0, this.consecutiveSpeechFrames - 2);
+                }
+                
+                // Much stricter requirements for interruption
+                const strictDetectionThreshold = 8; // Increased from 3 to 8
+                const longerCooldown = 1500; // Increased cooldown
+                
+                if (this.consecutiveSpeechFrames >= strictDetectionThreshold && 
+                    this.isRevSpeaking && 
+                    (currentTime - this.lastInterruptionTime) > longerCooldown &&
+                    (currentTime - this.revStartedSpeakingTime) > 1000) { // Additional buffer
+                    
+                    // Additional validation: check if the audio pattern suggests human speech
+                    if (this.validateHumanSpeech(pcmData, rms)) {
+                        console.log('Validated user speech detected - triggering interruption');
+                        this.triggerInterruption();
+                        this.lastInterruptionTime = currentTime;
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+            
+            // New method to validate if detected audio is likely human speech vs Rev's output
+            validateHumanSpeech(pcmData, rms) {
+                // Simple validation: human speech typically has more variation in amplitude
+                let variations = 0;
+                let lastSample = pcmData[0];
+                
+                for (let i = 1; i < pcmData.length; i++) {
+                    if (Math.abs(pcmData[i] - lastSample) > 0.05) {
+                        variations++;
+                    }
+                    lastSample = pcmData[i];
+                }
+                
+                const variationRatio = variations / pcmData.length;
+                
+                // Human speech should have more variation than AI output
+                // and RMS should be significantly higher than normal threshold
+                return variationRatio > 0.15 && rms > (this.speechThreshold * 3);
+            }
+            
+            triggerInterruption() {
+                if (this.ws && this.isConnected) {
+                    this.ws.send(JSON.stringify({
+                        type: 'user_started_speaking'
+                    }));
+                }
+                
+                this.handleInterruptionFromServer();
+            }
+            
+            connectToGemini() {
+                if (this.ws && this.isConnected) {
+                    this.ws.send(JSON.stringify({ type: 'connect_gemini' }));
+                    this.updateStatus('Connecting to Rev...', 'connected');
+                }
+            }
+            
+            async toggleRecording() {
+                if (this.isRecording) {
+                    this.stopRecording();
+                } else {
+                    await this.startRecording();
+                }
+            }
+            
+            async startRecording() {
+                try {
+                    await this.inputAudioContext.resume();
+                    await this.outputAudioContext.resume();
+                    
+                    this.audioStream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                            sampleRate: 16000,
+                            channelCount: 1
+                        },
+                        video: false
+                    });
+                    
+                    this.sourceNode = this.inputAudioContext.createMediaStreamSource(this.audioStream);
+                    
+                    this.analyser = this.inputAudioContext.createAnalyser();
+                    this.analyser.fftSize = 256;
+                    this.analyser.smoothingTimeConstant = 0.8;
+                    this.sourceNode.connect(this.analyser);
+                    
+                    const bufferSize = 256;
+                    this.processor = this.inputAudioContext.createScriptProcessor(bufferSize, 1, 1);
+                    
+                    this.processor.onaudioprocess = (audioProcessingEvent) => {
+                        if (!this.isRecording) return;
+                        
+                        const inputBuffer = audioProcessingEvent.inputBuffer;
+                        const pcmData = inputBuffer.getChannelData(0);
+                        
+                        this.detectSpeechForInterruption(pcmData);
+                        
+                        const blob = this.createBlob(pcmData);
+                        
+                        if (this.ws && this.isConnected) {
+                            this.ws.send(JSON.stringify({
+                                type: 'audio_chunk',
+                                audioData: blob.data,
+                                mimeType: blob.mimeType
+                            }));
+                        }
+                    };
+                    
+                    this.sourceNode.connect(this.processor);
+                    this.processor.connect(this.inputAudioContext.destination);
+                    
+                    this.startVisualization();
+                    
+                    this.isRecording = true;
+                    this.voiceBtn.classList.add('recording');
+                    this.voiceBtn.classList.remove('interrupted');
+                    this.voiceBtn.textContent = '⏹️';
+                    this.updateStatus('🔴 Listening... Ask me about Revolt Motors!', 'recording');
+                    
+                } catch (error) {
+                    console.error('Recording error:', error);
+                    this.updateStatus('Microphone access denied', 'disconnected');
+                }
+            }
+            
+            stopRecording() {
+                if (!this.isRecording && !this.audioStream) return;
+                
+                this.isRecording = false;
+                this.consecutiveSpeechFrames = 0;
+                
+                if (this.processor && this.sourceNode) {
+                    this.processor.disconnect();
+                    this.sourceNode.disconnect();
+                }
+                
+                this.processor = null;
+                this.sourceNode = null;
+                
+                if (this.audioStream) {
+                    this.audioStream.getTracks().forEach(track => track.stop());
+                    this.audioStream = null;
+                }
+                
+                this.voiceBtn.classList.remove('recording', 'interrupted');
+                this.voiceBtn.textContent = '🎤';
+                this.updateStatus('Processing... Rev is thinking 🤔', 'connected');
+            }
+            
+            createBlob(pcmData) {
+                const arrayBuffer = new ArrayBuffer(pcmData.length * 2);
+                const view = new DataView(arrayBuffer);
+                
+                for (let i = 0; i < pcmData.length; i++) {
+                    const sample = Math.max(-1, Math.min(1, pcmData[i]));
+                    const int16Sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                    view.setInt16(i * 2, int16Sample, true);
+                }
+                
+                return {
+                    data: this.arrayBufferToBase64(arrayBuffer),
+                    mimeType: "audio/pcm;rate=16000"
+                };
+            }
+            
+            decodeAudioData(base64Data) {
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+            
+            async playAudioResponse(base64Audio) {
+                try {
+                    const audioData = this.decodeAudioData(base64Audio);
+                    
+                    const sampleRate = 24000;
+                    const numSamples = audioData.byteLength / 2;
+                    
+                    const audioBuffer = this.outputAudioContext.createBuffer(1, numSamples, sampleRate);
+                    const channelData = audioBuffer.getChannelData(0);
+                    const dataView = new DataView(audioData);
+                    
+                    for (let i = 0; i < numSamples; i++) {
+                        const sample = dataView.getInt16(i * 2, true);
+                        channelData[i] = sample / 32768.0;
+                    }
+                    
+                    this.nextStartTime = Math.max(
+                        this.nextStartTime,
+                        this.outputAudioContext.currentTime
+                    );
+                    
+                    const source = this.outputAudioContext.createBufferSource();
+                    source.buffer = audioBuffer;
+                    source.connect(this.outputAudioContext.destination);
+                    
+                    source.addEventListener('ended', () => {
+                        this.sources.delete(source);
+                        if (this.sources.size === 0) {
+                            this.isRevSpeaking = false;
+                            this.updateStatus('Ready to chat with Rev! 🏍️', 'connected');
+                        }
+                    });
+                    
+                    source.start(this.nextStartTime);
+                    this.nextStartTime = this.nextStartTime + audioBuffer.duration;
+                    this.sources.add(source);
+                    
+                    this.updateStatus('🗣️ Rev is speaking...', 'connected');
+                    
+                } catch (error) {
+                    console.error('Audio playback error:', error);
+                    this.isRevSpeaking = false;
+                }
+            }
+            
+            arrayBufferToBase64(buffer) {
+                let binary = '';
+                const bytes = new Uint8Array(buffer);
+                for (let i = 0; i < bytes.byteLength; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                return btoa(binary);
+            }
+            
+            startVisualization() {
+                const bars = this.visualizer.children;
+                const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                
+                const animate = () => {
+                    if (!this.isRecording) {
+                        for (let i = 0; i < bars.length; i++) {
+                            bars[i].style.height = '10px';
+                        }
+                        return;
+                    }
+                    
+                    this.analyser.getByteFrequencyData(dataArray);
+                    
+                    for (let i = 0; i < bars.length; i++) {
+                        // Enhanced visualization with better interruption indication
+                        const barHeight = (dataArray[i * 8] / 255) * 60 + 10;
+                        bars[i].style.height = barHeight + 'px';
+                        
+                        // Only change color if we have very strong interruption signal
+                        if (this.consecutiveSpeechFrames >= (this.speechDetectionThreshold - 2) && 
+                            this.isRevSpeaking && 
+                            (Date.now() - this.revStartedSpeakingTime) > 1000) {
+                            bars[i].style.background = 'linear-gradient(to top, #ff9800, #ffb74d)';
+                        } else {
+                            bars[i].style.background = 'linear-gradient(to top, #ff6b35, #ffa726)';
+                        }
+                    }
+                    
+                    requestAnimationFrame(animate);
+                };
+                
+                animate();
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            new RevVoiceAssistant();
+        });
+    </script>
+</body>
+</html>
